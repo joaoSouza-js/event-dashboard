@@ -25,7 +25,7 @@ type AttendeeResponse ={
 const amountAttendsVisible = 10
 
 export function AttendeeList() {
-    const eventId = "9e9bd979-9d10-4915-b339-3786b1634f33"
+    const eventSlug = "show-em-east-abdielfort-eVKJ2p"
     const [search, setSearch] = useState<string>(() => {
         const url = new URL(window.location.toString())
         if(url.searchParams.has("query")){
@@ -44,9 +44,9 @@ export function AttendeeList() {
     })
     
     async function fetchAttendees() {
-        const url = new URL(`/events/${eventId}/attendees`, api_base_url)
+        const url = new URL(`/events/${eventSlug}/attendees`, api_base_url)
         url.searchParams.set("pageIndex", String(attendeeListPage - 1))
-        if(search.length > 1) url.searchParams.set("query", search)
+        if(search.length > 1) url.searchParams.set("search", search)
 
         const response =  await api.get(url.toString())
         const attendees: AttendeeResponse = response.data
@@ -87,6 +87,7 @@ export function AttendeeList() {
 
     function handleNavigateToLastPage() {
         setCurrentPage(totalPages)
+        setAttendeeListPage(totalPages)
     }
 
     function handleNavigateToPreviousPage() {

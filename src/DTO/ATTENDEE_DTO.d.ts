@@ -1,7 +1,7 @@
 interface ATTENDEE_DTO {
-    id: string
+    id: number
     name: string
     email: string
-    createdAt: Date | string
+    createAt: Date | string
     checkedInAt: Date | string | null
 }

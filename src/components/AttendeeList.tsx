@@ -9,26 +9,33 @@ import { TableBodyRow } from "./Table/TableBodyRow";
 import { TableHeaderData } from "./Table/TableHeaderData";
 import { TableBodyData } from "./Table/TableBodyData";
 import { IconButton } from "./IconButton";
-import { ChangeEvent, useState } from "react";
-import { attendees } from "../utils/attends";
-
+import { ChangeEvent, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api, api_base_url } from "../services/api";
+import { TableAttendeeSettings } from "./Table/TableAttendeeSettings";
+import { AlertToast } from "./AlertToast";
+import axios from "axios";
 
+type attendeeProps = ATTENDEE_DTO & {
+    isDeleted?: boolean
+}
 
-type AttendeeResponse ={
-    attendees: ATTENDEE_DTO[],
+type AttendeeResponse = {
+    attendees: attendeeProps[],
     total: number
 }
 
-
+const pageLimit  = 7
 const amountAttendsVisible = 10
 
 export function AttendeeList() {
     const eventSlug = "show-em-east-abdielfort-eVKJ2p"
+    const [attendeesLocal, setAttendeesLocal] = useState<attendeeProps[]>([])
+    const [deletedAttendees, setDeletedAttendees] = useState<number[]>([])
+
     const [search, setSearch] = useState<string>(() => {
         const url = new URL(window.location.toString())
-        if(url.searchParams.has("query")){
+        if (url.searchParams.has("query")) {
             const searchInParams = url.searchParams.get("query") ?? ""
             return searchInParams
         }
@@ -36,23 +43,70 @@ export function AttendeeList() {
     })
     const [attendeeListPage, setAttendeeListPage] = useState<number>(() => {
         const url = new URL(window.location.toString())
-        if (url.searchParams.has("page")){
+        if (url.searchParams.has("page")) {
             const page = Number(url.searchParams.get("page")) ?? 1
             return page
         }
         return 1
     })
-    
+    const [alertToastIsVisible, setAlertToastIsVisible] = useState(false)
+
+    const attendeeVisible = attendeesLocal.filter(attendee => !attendee.isDeleted)
+
+    function deleteAttendee(attendeeId: number) {
+        openAlertToast()
+        const attendeeListWithoutOneAttendee = attendeesLocal.map((attendee) => {
+            if (attendee.id === attendeeId) {
+                return {
+                    ...attendee,
+                    isDeleted: true
+                }
+            }
+            return attendee
+        })
+        setAttendeesLocal(attendeeListWithoutOneAttendee)
+        setDeletedAttendees(state => [...state, attendeeId])
+    }
+
+    async function deleteAttendeeOnApi() {
+        if (deletedAttendees.length === 0 || alertToastIsVisible) return
+
+        const AttendeeDeletedPromises = deletedAttendees.map(attendedId => {
+            const url = new URL(`/attendees/${String(attendedId)}`, api_base_url)
+            return axios.delete(url.toString())
+        })
+        await Promise.all(AttendeeDeletedPromises)
+            .finally(() => {
+                setDeletedAttendees([])
+            })
+    }
+
+    function undoAttendeeDeleted() {
+        const attendeesUndo = attendeesLocal.map(attendee => {
+            return {
+                ...attendee,
+                isDeleted: false
+            }
+        })
+        setDeletedAttendees([])
+        setAttendeesLocal(attendeesUndo)
+
+    }
+
     async function fetchAttendees() {
         const url = new URL(`/events/${eventSlug}/attendees`, api_base_url)
         url.searchParams.set("pageIndex", String(attendeeListPage - 1))
-        if(search.length > 1) url.searchParams.set("search", search)
+        url.searchParams.set("limit", pageLimit.toString())
+        if (search.length > 1) url.searchParams.set("search", search)
 
-        const response =  await api.get(url.toString())
+        const response = await api.get(url.toString())
+
         const attendees: AttendeeResponse = response.data
+
+
+        setAttendeesLocal(attendees.attendees)
         return attendees
     }
-
 
     function handleSearch(event: ChangeEvent<HTMLInputElement>) {
         setSearch(event.target.value)
@@ -62,13 +116,13 @@ export function AttendeeList() {
     }
 
     function calculeTimeDistanceFromNow(date: Date | string | null) {
-        if(!date) return "Não fez check-in"
+        if (!date) return "Não fez check-in"
         return dayjs().to(date)
     }
 
     function handleNavigateToNextPage() {
-        if(!data?.attendees.length) return
-        if (attendeeListPage >= totalPages ) return
+        if (!data?.attendees.length) return
+        if (attendeeListPage >= totalPages) return
 
         setCurrentPage(attendeeListPage + 1)
         setAttendeeListPage(attendeeListPage + 1)
@@ -96,15 +150,20 @@ export function AttendeeList() {
         setAttendeeListPage(attendeeListPage - 1)
     }
 
-    
-    const {data} =  useQuery(
+    function openAlertToast() {
+        setAlertToastIsVisible(true)
+    }
+
+    const { data } = useQuery(
         {
-            queryKey: ['attendees',attendeeListPage,search], 
+            queryKey: ['attendees', attendeeListPage, search],
             queryFn: fetchAttendees,
-            placeholderData: {attendees: [], total: 0}
-            
+            placeholderData: { attendees: [], total: 0 }
+
         }
     )
+
+    const attendeeDeletedInThisPage = pageLimit - attendeeVisible.length
 
     function setSearchInParams(search: string) {
         const url = new URL(window.location.toString())
@@ -112,10 +171,16 @@ export function AttendeeList() {
         window.history.pushState({}, "", url)
     }
 
-    const totalPages = Math.ceil((data?.total ?? 0) / amountAttendsVisible)
+
+    
+    const totalPages = Math.ceil(((data?.total ?? 0) - deletedAttendees.length) / amountAttendsVisible)
+  
     const previousButtonDisabled = attendeeListPage <= 1
     const nextButtonDisabled = attendeeListPage === totalPages
 
+    useEffect(() => {
+        deleteAttendeeOnApi()
+    }, [alertToastIsVisible])
 
     return (
         <div className="flex gap-3 mt-7  flex-col" >
@@ -144,38 +209,41 @@ export function AttendeeList() {
                     </tr>
                 </thead>
                 <tbody>
-                    
+
                     {
-                        data?.attendees.map((attendee) => (
-                            <TableBodyRow
-                                key={attendee.id}
-                            >
-                                <TableBodyData style={{ width: 48 }}>
-                                    <CheckBox />
-                                </TableBodyData>
-                                <TableBodyData>{attendee.id}</TableBodyData>
-                                <TableBodyData>
-                                    <div className="flex flex-col gap-1">
-                                        <span className="font-semibold text-zinc-50">{attendee.name}</span>
-                                        <span>{attendee.email}</span>
+                        attendeesLocal.map((attendee) => (
 
-                                    </div>
-                                </TableBodyData>
-                                <TableBodyData>{calculeTimeDistanceFromNow(attendee.createdAt)}</TableBodyData>
-                                <TableBodyData className={attendee.checkedInAt === null ? "text-zinc-500": ''}>
-                                    {calculeTimeDistanceFromNow(attendee.checkedInAt)}
+                            attendee.isDeleted !== true && (
+
+                                <TableBodyRow
+                                    key={attendee.id}
+                                >
+                                    <TableBodyData style={{ width: 48 }}>
+                                        <CheckBox />
                                     </TableBodyData>
-                                <td style={{ width: 64 }}>
-                                    <div className="flex  justify-end px-4">
-                                        <IconButton>
-                                            <Ellipsis className="size-4" />
+                                    <TableBodyData>{attendee.id}</TableBodyData>
+                                    <TableBodyData>
+                                        <div className="flex flex-col gap-1">
+                                            <span className="font-semibold text-zinc-50">{attendee.name}</span>
+                                            <span>{attendee.email}</span>
 
+                                        </div>
+                                    </TableBodyData>
+                                    <TableBodyData>{calculeTimeDistanceFromNow(attendee.createAt)}</TableBodyData>
+                                    <TableBodyData className={attendee.checkedInAt === null ? "text-zinc-500" : ''}>
+                                        {calculeTimeDistanceFromNow(attendee.checkedInAt)}
+                                    </TableBodyData>
+                                    <td style={{ width: 64 }}>
+                                        <div className="">
+                                            <TableAttendeeSettings
+                                                deleteAttendee={() => deleteAttendee(attendee.id)}
+                                            />
 
-                                        </IconButton>
+                                        </div>
+                                    </td>
+                                </TableBodyRow>
+                            )
 
-                                    </div>
-                                </td>
-                            </TableBodyRow>
 
                         ))
                     }
@@ -186,7 +254,7 @@ export function AttendeeList() {
                             colSpan={3}
                             className=" text-sm text-zinc-300 py-4 px-4"
                         >
-                            Mostrando {data?.attendees.length} de {data?.total} itens
+                            Mostrando {data?.attendees.length} de {(data?.total ?? 0) - attendeeDeletedInThisPage} itens
                         </TableBodyData>
                         <TableBodyData colSpan={3} className="py-3">
                             <div className="flex gap-6 items-center  justify-end px-4">
@@ -245,7 +313,11 @@ export function AttendeeList() {
                 </tfoot>
             </Table>
 
-
+            <AlertToast
+                open={alertToastIsVisible}
+                undoDeletedAttend={() => undoAttendeeDeleted()}
+                setTostIsVisible={setAlertToastIsVisible}
+            />
         </div>
     )
 }

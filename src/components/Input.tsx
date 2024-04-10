@@ -1,4 +1,4 @@
-import { ComponentProps, ReactElement, ReactNode, forwardRef } from "react";
+import { ComponentProps, ReactElement, forwardRef } from "react";
 import { tv, type VariantProps } from 'tailwind-variants';
 
 const inputStyles = tv({
@@ -6,10 +6,7 @@ const inputStyles = tv({
 })
 
 
-
 type InputStylesProps = VariantProps<typeof inputStyles>;
-
-
 
 type InputProps = ComponentProps<"input"> & InputStylesProps & {
     LeftIcon?: ReactElement

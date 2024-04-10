@@ -13,8 +13,6 @@ export function Table({ className, ...rest }: tableProps) {
     return (
         <div className="border border-white/10 rounded-lg mt-4">
             <table className={tableStyles({ className })} {...rest}/>
-                
-         
 
         </div>
 

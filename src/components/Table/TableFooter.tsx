@@ -1,7 +1,8 @@
 import { ComponentProps } from "react"
 import {tv, type VariantProps} from "tailwind-variants"
-import { IconButton } from "../IconButton"
 import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRightIcon } from "lucide-react"
+
+import { IconButton } from "../IconButton"
 
 const TableFooterStyles = tv({
     base: ""

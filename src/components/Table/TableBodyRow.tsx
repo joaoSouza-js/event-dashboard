@@ -1,4 +1,3 @@
-
 import { ComponentProps } from "react";
 
 type TableBodyRowProps = ComponentProps<"tr">

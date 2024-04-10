@@ -1,20 +1,19 @@
+import axios from "axios";
+import dayjs from "dayjs";
+import { useQuery } from "@tanstack/react-query";
+import { ChangeEvent, useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRightIcon, Ellipsis, Search } from "lucide-react"
 
 import { Input } from "./Input";
-import dayjs from "dayjs";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRightIcon, Ellipsis, Search } from "lucide-react"
 import { Table } from "./Table";
 import { CheckBox } from "./CheckBox";
+import { IconButton } from "./IconButton";
+import { AlertToast } from "./AlertToast";
 import { TableBodyRow } from "./Table/TableBodyRow";
-
 import { TableHeaderData } from "./Table/TableHeaderData";
 import { TableBodyData } from "./Table/TableBodyData";
-import { IconButton } from "./IconButton";
-import { ChangeEvent, useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { api, api_base_url } from "../services/api";
 import { TableAttendeeSettings } from "./Table/TableAttendeeSettings";
-import { AlertToast } from "./AlertToast";
-import axios from "axios";
 
 type attendeeProps = ATTENDEE_DTO & {
     isDeleted?: boolean
@@ -31,7 +30,7 @@ const amountAttendsVisible = 10
 export function AttendeeList() {
     const eventSlug = "show-em-east-abdielfort-eVKJ2p"
     const [attendeesLocal, setAttendeesLocal] = useState<attendeeProps[]>([])
-    const [deletedAttendees, setDeletedAttendees] = useState<number[]>([])
+    const [deletedAttendeesId, setDeletedAttendeesId] = useState<number[]>([])
 
     const [search, setSearch] = useState<string>(() => {
         const url = new URL(window.location.toString())
@@ -65,19 +64,19 @@ export function AttendeeList() {
             return attendee
         })
         setAttendeesLocal(attendeeListWithoutOneAttendee)
-        setDeletedAttendees(state => [...state, attendeeId])
+        setDeletedAttendeesId(state => [...state, attendeeId])
     }
 
     async function deleteAttendeeOnApi() {
-        if (deletedAttendees.length === 0 || alertToastIsVisible) return
+        if (deletedAttendeesId.length === 0 || alertToastIsVisible) return
 
-        const AttendeeDeletedPromises = deletedAttendees.map(attendedId => {
+        const AttendeeDeletedPromises = deletedAttendeesId.map(attendedId => {
             const url = new URL(`/attendees/${String(attendedId)}`, api_base_url)
             return axios.delete(url.toString())
         })
         await Promise.all(AttendeeDeletedPromises)
             .finally(() => {
-                setDeletedAttendees([])
+                setDeletedAttendeesId([])
             })
     }
 
@@ -88,7 +87,7 @@ export function AttendeeList() {
                 isDeleted: false
             }
         })
-        setDeletedAttendees([])
+        setDeletedAttendeesId([])
         setAttendeesLocal(attendeesUndo)
 
     }
@@ -100,9 +99,7 @@ export function AttendeeList() {
         if (search.length > 1) url.searchParams.set("search", search)
 
         const response = await api.get(url.toString())
-
         const attendees: AttendeeResponse = response.data
-
 
         setAttendeesLocal(attendees.attendees)
         return attendees
@@ -115,7 +112,7 @@ export function AttendeeList() {
         setAttendeeListPage(1)
     }
 
-    function calculeTimeDistanceFromNow(date: Date | string | null) {
+    function calculateTimeDistanceFromNow(date: Date | string | null) {
         if (!date) return "Não fez check-in"
         return dayjs().to(date)
     }
@@ -163,17 +160,18 @@ export function AttendeeList() {
         }
     )
 
-    const attendeeDeletedInThisPage = pageLimit - attendeeVisible.length
+    const attendeeDeletedInThisPage = pageLimit >= (data?.total ?? 0) 
+        ? 0 
+        : pageLimit - attendeeVisible.length
 
     function setSearchInParams(search: string) {
         const url = new URL(window.location.toString())
-        url.searchParams.set("query", search)
+        if(search=== "") url.searchParams.delete("query")
+        else url.searchParams.set("query", search)
         window.history.pushState({}, "", url)
     }
 
-
-    
-    const totalPages = Math.ceil(((data?.total ?? 0) - deletedAttendees.length) / amountAttendsVisible)
+    const totalPages = Math.ceil(((data?.total ?? 0) - deletedAttendeesId.length) / amountAttendsVisible)
   
     const previousButtonDisabled = attendeeListPage <= 1
     const nextButtonDisabled = attendeeListPage === totalPages
@@ -229,9 +227,9 @@ export function AttendeeList() {
 
                                         </div>
                                     </TableBodyData>
-                                    <TableBodyData>{calculeTimeDistanceFromNow(attendee.createAt)}</TableBodyData>
+                                    <TableBodyData>{calculateTimeDistanceFromNow(attendee.createAt)}</TableBodyData>
                                     <TableBodyData className={attendee.checkedInAt === null ? "text-zinc-500" : ''}>
-                                        {calculeTimeDistanceFromNow(attendee.checkedInAt)}
+                                        {calculateTimeDistanceFromNow(attendee.checkedInAt)}
                                     </TableBodyData>
                                     <td style={{ width: 64 }}>
                                         <div className="">

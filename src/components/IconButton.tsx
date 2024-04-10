@@ -1,4 +1,4 @@
-import { ComponentProps, ReactElement } from "react";
+import { ComponentProps, forwardRef } from "react";
 import { tv, type VariantProps } from 'tailwind-variants';
 
 const iconButtonStyles = tv({
@@ -8,7 +8,7 @@ const iconButtonStyles = tv({
             primary: "bg-black/20 border-white/10",
             secondary: "bg-white/10 border-white/10",
         },
-       
+
     },
     defaultVariants: {
         variant: "primary",
@@ -19,12 +19,16 @@ type iconButtonVariants = VariantProps<typeof iconButtonStyles>;
 
 type iconButtonProps = ComponentProps<"button"> & iconButtonVariants
 
-export function IconButton({variant="primary", disabled , className,...rest}: iconButtonProps):ReactElement{
+
+export const IconButton = forwardRef<HTMLButtonElement, iconButtonProps>((props, ref) => {
+    const {variant="primary", disabled , className,...rest} = props
     return (
-        <button 
-            className={iconButtonStyles({variant,className, })} 
+        <button
+            ref={ref}
+            className={iconButtonStyles({ variant, className, })}
             disabled={disabled}
             {...rest}
-        />    
+        />
     )
-}
+})
+

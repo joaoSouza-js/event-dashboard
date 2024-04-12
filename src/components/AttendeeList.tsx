@@ -184,7 +184,7 @@ export function AttendeeList() {
         <div className="flex gap-3 mt-7  flex-col" >
             <header className="flex gap-3">
                 <h1 className="font-bold text-2xl">Participates</h1>
-                <Input
+                <Input.Input
                     value={search}
                     onChange={handleSearch}
                     className="w-72"

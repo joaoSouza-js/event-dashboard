@@ -26,21 +26,21 @@ export function SignUp() {
                 </header>
 
                 <div className="mt-8 flex gap-4 flex-col">
-                    <Input
+                    <Input.Input
                         className="bg-transparent"
 
                         placeholder="digite o seu nome"
                     />
-                    <Input
+                    <Input.Input
                         className="bg-transparent"
                         placeholder="seuemail@gmail.com"
                     />
-                    <Input
+                    <Input.Input
                         className="bg-transparent"
                         placeholder="sua senha"
                         RightIcon={<Eye />}
                     />
-                    <Input
+                    <Input.Input
                         className="bg-transparent"
                         placeholder="repita a sua senha"
                         RightIcon={<Eye />}

@@ -6,7 +6,8 @@ import { Dispatch, SetStateAction } from 'react';
 type AlertToastProps = Toast.ToastProps & {
     setTostIsVisible: Dispatch<SetStateAction<boolean>>,
     title?: string,
-    undoDeletedAttend: () => void,
+    hasUndoButton?: boolean,
+    undoDeletedAttend?: () => void,
     description?: string
 }
 
@@ -15,6 +16,8 @@ export function AlertToast(props: AlertToastProps) {
         open,
         setTostIsVisible,
         undoDeletedAttend,
+        hasUndoButton = false,
+        duration = 2000,
         title = "Informação deleta",
         description = "Você acabou de Deletar algo"
     } = props
@@ -23,9 +26,10 @@ export function AlertToast(props: AlertToastProps) {
 
 
             <Toast.Root
+            
                 className="bg-red-500 pt-3 pb-4 px-3 relative rounded-md shadow-[hsl(206_22%_7%_/_35%)_0px_10px_38px_-10px,_hsl(206_22%_7%_/_20%)_0px_10px_20px_-15px]  [grid-template-areas:_'title_action'_'description_action'] grid-cols-[auto_max-content] gap-x-[15px] items-center data-[state=open]:animate-slideIn data-[state=closed]:animate-hide data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=cancel]:translate-x-0 data-[swipe=cancel]:transition-[transform_200ms_ease-out] data-[swipe=end]:animate-swipeOut"
                 open={open}
-                duration={2000}
+                duration={duration}
                 onOpenChange={setTostIsVisible}
             >
                 <Toast.Close asChild>
@@ -46,15 +50,20 @@ export function AlertToast(props: AlertToastProps) {
                         </Toast.Description>
 
                     </div>
-                    <Toast.Action
-                        onClick={undoDeletedAttend}
-                        className="border border-zinc-100 py-1.5 px-3 text-sm font-bold rounded-lg"
-                        altText="Goto schedule to undo"
-                    >
+                    {
+                        hasUndoButton && (
+                            <Toast.Action
+                                onClick={undoDeletedAttend}
+                                className="border border-zinc-100 py-1.5 px-3 text-sm font-bold rounded-lg"
+                                altText="Goto schedule to undo"
+                            >
 
-                        desfazer
+                                desfazer
 
-                    </Toast.Action>
+                            </Toast.Action>
+
+                        )
+                    }
 
                 </div>
             </Toast.Root>

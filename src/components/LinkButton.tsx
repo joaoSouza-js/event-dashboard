@@ -2,7 +2,7 @@ import { ComponentProps, forwardRef } from "react";
 import { tv, type VariantProps } from 'tailwind-variants';
 
 const LinkButtonStyles = tv({
-    base: " p-2 flex justify-center items-center rounded-md focus:outline-white focus:outline-2 border disabled:opacity-50 disabled:cursor-not-allowed ",
+    base: " p-2  min-h-9 flex justify-center items-center rounded-md focus:outline-white focus:outline-2 border disabled:opacity-50 disabled:cursor-not-allowed ",
     variants: {
         variant: {
             primary: "bg-black/20 border-white/10",

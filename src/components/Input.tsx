@@ -81,6 +81,7 @@ const InputPassword = forwardRef<HTMLInputElement, InputPasswordProps>((props, r
     return (
         <InputInput
             ref={ref}
+            type={isVisible? "text": "password"}
             className="bg-transparent"
             placeholder="sua senha"
             RightIcon={

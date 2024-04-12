@@ -125,6 +125,7 @@ export function SignIn() {
                     </Button>
 
                     <Button
+                        type="button"
                         variant="primary"
                         onClick={auth}
                         className="text-sm gap-2 font-medium mt-1"
